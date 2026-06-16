@@ -6,6 +6,9 @@ import { useState } from "react";
 import { ExpenseFormData } from "../types";
 import { formatDate } from "../utils/expenseUtils";
 
+const today = () => formatDate(new Date());
+const FUTURE_DATE_ERROR = "Date cannot be in the future. Choose today or a past date.";
+
 interface UseExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
   onSubmit: (data: ExpenseFormData) => Promise<void>;
@@ -16,7 +19,7 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
     amount: initialData?.amount || "",
     description: initialData?.description || "",
     category: initialData?.category || "",
-    date: initialData?.date || formatDate(new Date()),
+    date: initialData?.date || today(),
   });
 
   const [errors, setErrors] = useState<Partial<ExpenseFormData>>({});
@@ -47,6 +50,8 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
 
     if (!formData.date) {
       newErrors.date = "Date is required";
+    } else if (formData.date > today()) {
+      newErrors.date = FUTURE_DATE_ERROR;
     }
 
     setErrors(newErrors);
@@ -68,7 +73,7 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
         amount: "",
         description: "",
         category: "",
-        date: formatDate(new Date()),
+        date: today(),
       });
       setErrors({});
     } catch (error) {
@@ -83,7 +88,7 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
       amount: initialData?.amount || "",
       description: initialData?.description || "",
       category: initialData?.category || "",
-      date: initialData?.date || formatDate(new Date()),
+      date: initialData?.date || today(),
     });
     setErrors({});
   };
