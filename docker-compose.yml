@@ -42,6 +42,8 @@ services:
       DATABASE_NAME: expense_system_development
       DATABASE_USERNAME: expense_user
       DATABASE_PASSWORD: expense_password
+      BUNDLE_PATH: /usr/local/bundle
+      BUNDLE_APP_CONFIG: /usr/local/bundle
     ports:
       - "3000:3000"
     depends_on:
@@ -50,13 +52,16 @@ services:
     volumes:
       - ./backend:/rails
       - backend_gems:/usr/local/bundle
-    command: >
-      sh -c "
+    command:
+      - sh
+      - -c
+      - |
+        bundle config set path /usr/local/bundle &&
         bundle install &&
-        rails db:migrate &&
-        rails db:seed &&
-        rails server -b 0.0.0.0
-      "
+        bundle exec rails db:migrate &&
+        bundle exec rails db:seed &&
+        rm -f tmp/pids/server.pid &&
+        bundle exec rails server -b 0.0.0.0
     networks:
       - expense_network
 
@@ -74,7 +79,13 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
-    command: npm run dev -- --host
+    command:
+      - sh
+      - -c
+      - |
+        npm install &&
+        npm install --no-save @rollup/rollup-linux-x64-musl@4.57.1 &&
+        npm run dev -- --host
     networks:
       - expense_network
 
