@@ -1,16 +1,16 @@
 # syntax = docker/dockerfile:1
 
-# Use Ruby 3.3.7
+# Use Ruby 3.3.7. The standard image includes the native build tools and
+# MySQL development headers needed by the bundle.
 ARG RUBY_VERSION=3.3.7
-FROM ruby:$RUBY_VERSION-slim
+FROM ruby:$RUBY_VERSION
 
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential ca-certificates default-mysql-client default-libmysqlclient-dev git && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+# Prefer IPv4 DNS results. Some Docker Desktop networks expose IPv6 DNS
+# records even when containers cannot route IPv6 traffic.
+RUN echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
