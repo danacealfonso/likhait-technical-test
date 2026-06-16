@@ -5,8 +5,25 @@ RSpec.describe "Api::Expenses", type: :request do
   let!(:transport_category) { Category.create!(name: "Transport") }
 
   describe "GET /api/expenses" do
-  let!(:expense1) { Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: Date.today) }
-  let!(:expense2) { Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: Date.today) }
+    let!(:expense1) do
+      Expense.create!(
+        description: "Lunch",
+        amount: 100.00,
+        category: food_category,
+        date: Date.new(2026, 6, 14),
+        created_at: Time.zone.local(2026, 6, 16, 9, 0, 0)
+      )
+    end
+
+    let!(:expense2) do
+      Expense.create!(
+        description: "Taxi",
+        amount: 50.00,
+        category: transport_category,
+        date: Date.new(2026, 6, 17),
+        created_at: Time.zone.local(2026, 6, 15, 9, 0, 0)
+      )
+    end
 
     it "returns all expenses with category information" do
       get "/api/expenses"
@@ -16,12 +33,27 @@ RSpec.describe "Api::Expenses", type: :request do
       expect(json.length).to eq(2)
     end
 
-    it "returns expenses in descending order by created_at" do
+    it "returns expenses in descending order by expense date" do
       get "/api/expenses"
 
       json = JSON.parse(response.body)
       expect(json.first["id"]).to eq(expense2.id)
       expect(json.last["id"]).to eq(expense1.id)
+    end
+
+    it "filters expenses by expense date when year and month are provided" do
+      Expense.create!(
+        description: "May Dinner",
+        amount: 75.00,
+        category: food_category,
+        date: Date.new(2026, 5, 31),
+        created_at: Time.zone.local(2026, 6, 1, 9, 0, 0)
+      )
+
+      get "/api/expenses", params: { year: 2026, month: 6 }
+
+      json = JSON.parse(response.body)
+      expect(json.map { |expense| expense["id"] }).to contain_exactly(expense1.id, expense2.id)
     end
   end
 
@@ -46,7 +78,7 @@ RSpec.describe "Api::Expenses", type: :request do
         expect(response).to have_http_status(:created)
         json = JSON.parse(response.body)
         expect(json["description"]).to eq("Team Lunch")
-        expect(json["amount"]).to eq("150.5")
+        expect(json["amount"]).to eq(150.5)
       end
     end
 
